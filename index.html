@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Manager</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #1a202c;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #2d3748;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #718096;
+      margin-bottom: 40px;
+      font-size: 0.95rem;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Form Card */
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #2d3748;
+      border-left: 4px solid #667eea;
+      padding-left: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #2d3748;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #667eea;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    button:hover { background: #5a67d8; }
+    button:active { transform: scale(0.98); }
+
+    /* Alert */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-top: 14px;
+      display: none;
+    }
+    .alert.success { background: #c6f6d5; color: #276749; display: block; }
+    .alert.error   { background: #fed7d7; color: #9b2c2c; display: block; }
+
+    /* Student List */
+    .student-list { list-style: none; }
+
+    .student-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: #f7fafc;
+      margin-bottom: 10px;
+      border: 1px solid #e2e8f0;
+      transition: box-shadow 0.2s;
+    }
+
+    .student-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+
+    .student-info { display: flex; align-items: center; gap: 14px; }
+
+    .avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .student-name { font-weight: 600; color: #2d3748; }
+    .student-age  { font-size: 0.82rem; color: #718096; margin-top: 2px; }
+
+    .badge {
+      background: #ebf4ff;
+      color: #3182ce;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #a0aec0;
+      padding: 30px 0;
+      font-size: 0.95rem;
+    }
+
+    .refresh-btn {
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+      margin-top: 0;
+    }
+    .refresh-btn:hover { background: #ebf4ff; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🎓 Student Manager</h1>
+  <p class="subtitle">FastAPI + MySQL দিয়ে তৈরি</p>
+
+  <!-- Add Student -->
+  <div class="card">
+    <h2>নতুন Student যোগ করো</h2>
+    <div class="form-group">
+      <label>নাম</label>
+      <input type="text" id="name" placeholder="যেমন: Iffath" />
+    </div>
+    <div class="form-group">
+      <label>বয়স</label>
+      <input type="number" id="age" placeholder="যেমন: 21" />
+    </div>
+    <button onclick="addStudent()">+ Student যোগ করো</button>
+    <div class="alert" id="alert"></div>
+  </div>
+
+  <!-- Student List -->
+  <div class="card">
+    <h2>সব Students</h2>
+    <button class="refresh-btn" onclick="loadStudents()">🔄 Refresh</button>
+    <br/><br/>
+    <ul class="student-list" id="studentList">
+      <li class="empty">Loading...</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const API = "http://127.0.0.1:8000";
+
+  async function addStudent() {
+    const name = document.getElementById("name").value.trim();
+    const age  = parseInt(document.getElementById("age").value);
+    const alert = document.getElementById("alert");
+
+    if (!name || !age) {
+      showAlert("নাম আর বয়স দুটোই দাও!", "error");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API}/students`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, age })
+      });
+
+      if (res.ok) {
+        showAlert(`✅ "${name}" যোগ হয়েছে!`, "success");
+        document.getElementById("name").value = "";
+        document.getElementById("age").value  = "";
+        loadStudents();
+      } else {
+        showAlert("কিছু একটা সমস্যা হয়েছে!", "error");
+      }
+    } catch (e) {
+      showAlert("Server এ connect হচ্ছে না!", "error");
+    }
+  }
+
+  async function loadStudents() {
+    const list = document.getElementById("studentList");
+    list.innerHTML = '<li class="empty">Loading...</li>';
+
+    try {
+      const res  = await fetch(`${API}/students`);
+      const data = await res.json();
+
+      if (data.length === 0) {
+        list.innerHTML = '<li class="empty">কোনো student নেই এখনো</li>';
+        return;
+      }
+
+      list.innerHTML = data.map(s => `
+        <li class="student-item">
+          <div class="student-info">
+            <div class="avatar">${s.name[0].toUpperCase()}</div>
+            <div>
+              <div class="student-name">${s.name}</div>
+              <div class="student-age">বয়স: ${s.age} বছর</div>
+            </div>
+          </div>
+          <span class="badge">ID #${s.id}</span>
+        </li>
+      `).join("");
+    } catch (e) {
+      list.innerHTML = '<li class="empty">Server এ connect হচ্ছে না!</li>';
+    }
+  }
+
+  function showAlert(msg, type) {
+    const el = document.getElementById("alert");
+    el.textContent = msg;
+    el.className = `alert ${type}`;
+    setTimeout(() => el.className = "alert", 3000);
+  }
+
+  // Page load এ students আনো
+  loadStudents();
+</script>
+</body>
+</html>
